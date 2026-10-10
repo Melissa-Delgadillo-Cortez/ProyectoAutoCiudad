@@ -218,13 +218,6 @@ Toda la geometría, los shaders, la lógica de juego y las texturas fueron escri
 
 ## 6. Instrucciones de ejecución
 
-### Requisitos previos
-
-- **JDK 17 o superior** (recomendado JDK 21): `java -version`
-- **Apache Maven 3.6+**: `mvn -version`
-- Sesión gráfica activa (no funciona en servidores sin pantalla)
-- Controlador de GPU con soporte OpenGL 3.3 Core Profile
-
 ### Estructura de archivos a entregar
 
 ```
@@ -244,8 +237,6 @@ CiudadConduccion/
         └── ConduccionTest.java                  ← pruebas de lógica sin ventana
 ```
 
-> **Nota:** las dependencias de LWJGL (JARs y nativos) las descarga Maven automáticamente desde Maven Central. No se incluyen en la entrega. El directorio `target/` está excluido por `.gitignore`.
-
 ### Comando para ejecutar la versión final
 
 Abrir una terminal en la carpeta donde está `pom.xml` y ejecutar:
@@ -253,53 +244,6 @@ Abrir una terminal en la carpeta donde está `pom.xml` y ejecutar:
 ```sh
 mvn compile exec:java
 ```
-
-Esto compila y ejecuta `com.graphics.Texturas` (la versión final con texturas procedurales). La primera ejecución descarga las dependencias automáticamente.
-
-### Ejecutar una etapa específica
-
-```sh
-mvn compile exec:java -Dexec.mainClass=com.graphics.CiudadBase     # Clase 1: solo ciudad
-mvn compile exec:java -Dexec.mainClass=com.graphics.Conduccion      # Clase 2: + vehículo
-mvn compile exec:java -Dexec.mainClass=com.graphics.Iluminacion     # Clase 3: + iluminación
-mvn compile exec:java -Dexec.mainClass=com.graphics.Entregas        # Clase 4: + minimapa y entregas
-mvn compile exec:java -Dexec.mainClass=com.graphics.CiudadViva      # Clase 5: + ciudad viva
-mvn compile exec:java -Dexec.mainClass=com.graphics.Texturas        # Clase 6: versión final
-```
-
-### Ejecutar en macOS
-
-El perfil `macos` se activa automáticamente por Maven al detectar el SO. Agrega `-XstartOnFirstThread` al proceso de la JVM, requerido por GLFW en macOS. No se necesita ningún cambio manual.
-
-### Ejecutar las pruebas automáticas (sin ventana gráfica)
-
-```sh
-mvn test
-```
-
-Las 3 pruebas verifican:
-1. Rutas transitables sobre las calles del mapa.
-2. Colisiones con manzanas y límites del mapa.
-3. Reinicio correcto del estado de la partida.
-
-### Verificación rápida con arranque gráfico breve
-
-Para confirmar que los shaders compilan y la ventana se abre correctamente:
-
-```sh
-mvn compile exec:java -Ddemo.frames=6
-```
-
-La ventana dibuja 6 cuadros y se cierra sola. Requiere pantalla y GPU.
-
-### Notas de plataforma
-
-| SO | Comando | Observación |
-|----|---------|-------------|
-| Windows | `mvn compile exec:java` | Funciona directamente |
-| macOS Intel / Apple Silicon | `mvn compile exec:java` | Perfil `macos` agrega `-XstartOnFirstThread` automáticamente |
-| Linux x64 / ARM64 | `mvn compile exec:java` | Requiere display X11 o Wayland activo |
-
 ---
 
 ## 7. Práctica manual de verificación
