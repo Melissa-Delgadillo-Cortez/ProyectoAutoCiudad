@@ -2,7 +2,7 @@
 
 **Asignatura:** Programación Gráfica  
 **Estudiante:** Melissa Delgadillo Cortez 
-**Registro:** 218016778
+**Registro:** 218016778 
 **Proyecto:** Ciudad 3D con conducción, iluminación, entregas y texturas  
 **Tecnologías:** Java 21 · Maven · LWJGL 3.3.3 · GLFW · OpenGL 3.3 Core Profile · GLSL 330  
 
