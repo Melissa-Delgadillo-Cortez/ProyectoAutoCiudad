@@ -7,6 +7,12 @@
 **Tecnologías:** Java 21 · Maven · LWJGL 3.3.3 · GLFW · OpenGL 3.3 Core Profile · GLSL 330  
 
 ---
+## Modificación: hacer una chata en el auto dependiente
+
+Se modifico en las clases: Conduccion.java y CiudadViva.java
+
+En Conduccion.java se creo y dibujo la chata, tambien se ajusto el dibujo del auto, para que este con la chata
+Luego, para la colision y que respete la fisica de la chata, se modifico en la clase CiudadViva, donde tanto peatones y autos autonomos pueden colisionar con la chata.
 
 ## 1. Descripción del diseño de la ciudad
 
