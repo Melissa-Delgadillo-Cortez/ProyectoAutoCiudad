@@ -66,7 +66,7 @@ public class CiudadViva extends Entregas {
     // 3. VEHÍCULOS AUTÓNOMOS
     // ================================================================
 
-    protected static final int NA = 4;    // Número de agentes.
+    protected static final int NA = 5;    // Número de agentes.
 
     private final float[] aX   = new float[NA]; // Posición X.
     private final float[] aZ   = new float[NA]; // Posición Z.
@@ -79,6 +79,7 @@ public class CiudadViva extends Entregas {
         { 0.15f, 0.55f, 0.92f }, // Azul.
         { 0.20f, 0.75f, 0.28f }, // Verde.
         { 0.92f, 0.65f, 0.08f }, // Amarillo.
+        { 0.78f, 0.18f, 0.85f }, // Morado.
         { 0.78f, 0.18f, 0.85f }, // Morado.
     };
 
@@ -121,7 +122,7 @@ public class CiudadViva extends Entregas {
         // ── Agentes ──────────────────────────────────────────────────────────
         // Los 4 agentes siguen la misma ruta RUTA[] pero empiezan en waypoints
         // distintos (0, 5, 10, 15) para que estén repartidos por la ciudad.
-        int[] wpInicio = { 0, 5, 10, 15 };
+        int[] wpInicio = { 0, 5, 10, 15, 19 };
         for (int i = 0; i < NA; i++) {
             int wp  = wpInicio[i];
             aX[i]   = RUTA[wp][0];     // Posición X del waypoint inicial.
@@ -210,18 +211,30 @@ public class CiudadViva extends Entregas {
 
         // ── Colisión con agentes ────────────────────────────────────────────
         for (int i = 0; i < NA; i++) {
+            // Colisión agente vs auto
             float dx  = autoX - aX[i];
             float dz  = autoZ - aZ[i];
             float d2  = dx * dx + dz * dz;
             float lim = umbralAg * umbralAg;
             if (d2 < lim && d2 > 0.001f) {
-                // Distancia actual y cuánto hay que separar.
                 float d    = (float)Math.sqrt(d2);
-                float sep  = umbralAg - d + 0.05f; // 5 cm extra de margen.
-                // Normaliza el vector jugador→agente y empuja al jugador.
+                float sep  = umbralAg - d + 0.05f;
                 autoX += (dx / d) * sep;
                 autoZ += (dz / d) * sep;
-                velocidad = 0f; // Frena al choque.
+                velocidad = 0f;
+            }
+
+            // Colisión agente vs chata
+            float dxC = chataX - aX[i];
+            float dzC = chataZ - aZ[i];
+            float d2C = dxC * dxC + dzC * dzC;
+            if (d2C < lim && d2C > 0.001f) {
+                float d   = (float)Math.sqrt(d2C);
+                float sep = umbralAg - d + 0.05f;
+                // Empuja al agente lejos de la chata
+                aX[i] -= (dxC / d) * sep;
+                aZ[i] -= (dzC / d) * sep;
+                velocidad = 0f;
             }
         }
 
@@ -234,9 +247,19 @@ public class CiudadViva extends Entregas {
             if (d2 < lim && d2 > 0.001f) {
                 float d   = (float)Math.sqrt(d2);
                 float sep = umbralP - d + 0.05f;
-                // Empuja al peatón lejos del jugador (más realista que empujar al auto).
                 pX[i] -= (dx / d) * sep;
                 pZ[i] -= (dz / d) * sep;
+            }
+
+            // Colisión peatón vs chata
+            float dxC = chataX - pX[i];
+            float dzC = chataZ - pZ[i];
+            float d2C = dxC * dxC + dzC * dzC;
+            if (d2C < lim && d2C > 0.001f) {
+                float d   = (float)Math.sqrt(d2C);
+                float sep = umbralP - d + 0.05f;
+                pX[i] -= (dxC / d) * sep;
+                pZ[i] -= (dzC / d) * sep;
             }
         }
     }

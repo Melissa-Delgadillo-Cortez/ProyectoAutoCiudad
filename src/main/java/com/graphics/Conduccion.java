@@ -68,6 +68,11 @@ public class Conduccion extends CiudadBase {
      */
     protected static final float RADIO_AUTO = 1.65f;
 
+    // Variables de la chata (remolque del jugador)
+    protected float chataX   = -30f; // misma X que el auto al inicio
+    protected float chataZ   =  48f; // 3 unidades detrás del auto (45 + 3)
+    protected float chataAng =   0f;
+
     // ================================================================
     // 2. TECLADO Y REINICIO
     // ================================================================
@@ -102,6 +107,11 @@ public class Conduccion extends CiudadBase {
         autoZ    =  45f; // Coordenada Z de partida: calle horizontal sur.
         angulo   =   0f; // Orienta el frente del auto hacia el norte (−Z).
         velocidad =  0f; // Detiene cualquier movimiento previo.
+
+        //chata
+        chataX   = -30f;
+        chataZ   =  48f;
+        chataAng =   0f;
     }
 
     // ================================================================
@@ -168,23 +178,42 @@ public class Conduccion extends CiudadBase {
         angulo += direccion * velocidad * 0.11f * deltaTime;
 
         // ── Movimiento y colisiones ────────────────────────────────────────
-        // El frente del auto apunta en la dirección definida por el ángulo.
-        // ángulo=0 → frente hacia −Z; ángulo=π/2 → frente hacia −X.
-        float frenteX = -(float) Math.sin(angulo); // Componente X del vector frontal.
-        float frenteZ = -(float) Math.cos(angulo); // Componente Z del vector frontal.
+        float frenteX = -(float) Math.sin(angulo);
+        float frenteZ = -(float) Math.cos(angulo);
 
-        // Posición propuesta tras el desplazamiento de este cuadro.
         float sigX = autoX + frenteX * velocidad * deltaTime;
         float sigZ = autoZ + frenteZ * velocidad * deltaTime;
 
-        if (puedeCircular(sigX, sigZ)) {
-            autoX = sigX; // Acepta el movimiento si no hay colisión.
-            autoZ = sigZ;
+        // Calcular dónde quedaría la chata si el auto se mueve a sigX, sigZ
+        float engancheX2 = sigX + (float)Math.sin(angulo) * 1.4f;
+        float engancheZ2 = sigZ + (float)Math.cos(angulo) * 1.4f;
+        float dx2 = engancheX2 - chataX;
+        float dz2 = engancheZ2 - chataZ;
+        float dist2 = (float)Math.sqrt(dx2 * dx2 + dz2 * dz2);
+        float nuevaChataX = dist2 > 0.001f ? engancheX2 - (dx2 / dist2) * 1.6f : chataX;
+        float nuevaChataZ = dist2 > 0.001f ? engancheZ2 - (dz2 / dist2) * 1.6f : chataZ;
+
+        // El auto avanza solo si tanto él como la chata tienen camino libre
+        boolean chataLibre = puedeCircularChata(nuevaChataX, nuevaChataZ);
+        if (puedeCircular(sigX, sigZ) && chataLibre) {
+            autoX  = sigX;
+            autoZ  = sigZ;
+            // Mover la chata a su nueva posición confirmada
+            float engancheX = autoX + (float)Math.sin(angulo) * 1.4f;
+            float engancheZ = autoZ + (float)Math.cos(angulo) * 1.4f;
+            float dx = engancheX - chataX;
+            float dz = engancheZ - chataZ;
+            float dist = (float)Math.sqrt(dx * dx + dz * dz);
+            if (dist > 0.001f) {
+                chataX   = engancheX - (dx / dist) * 1.6f;
+                chataZ   = engancheZ - (dz / dist) * 1.6f;
+                chataAng = (float)Math.atan2(dx, dz);
+            }
         } else {
-            velocidad = 0f; // Frena el auto al chocar con una manzana o el borde.
+            velocidad = 0f; // Frena: el auto o la chata chocaron
         }
 
-        actualizarTitulo(); // Actualiza la barra de título con velocidad y estado.
+        actualizarTitulo();
     }
 
     /**
@@ -273,6 +302,33 @@ public class Conduccion extends CiudadBase {
         return true; // Ningún obstáculo encontrado; posición válida.
     }
 
+    /**
+     * Igual que puedeCircular pero con el radio de la chata (más ancha que el auto).
+     */
+    protected boolean puedeCircularChata(float x, float z) {
+        float radioChata = 1.6f; // La chata mide 1.5u de ancho, radio con margen.
+        float limite = LIMITE - radioChata;
+        if (Math.abs(x) > limite || Math.abs(z) > limite) {
+            return false;
+        }
+        for (int fila = 0; fila < MAPA.length; fila++) {
+            for (int col = 0; col < MAPA[fila].length; col++) {
+                if (MAPA[fila][col] == 0) continue;
+                float cx   = centro(col);
+                float cz   = centro(fila);
+                float mitad = CELDA / 2f;
+                float cercaX = Math.max(cx - mitad, Math.min(x, cx + mitad));
+                float cercaZ = Math.max(cz - mitad, Math.min(z, cz + mitad));
+                float dx = x - cercaX;
+                float dz = z - cercaZ;
+                if (dx * dx + dz * dz < radioChata * radioChata) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     // ================================================================
     // 5. CÁMARA
     // ================================================================
@@ -359,6 +415,43 @@ public class Conduccion extends CiudadBase {
             // Luz trasera: color rojo.
             pieza(fx, 0.68f,  1.32f,  0.35f, 0.17f, 0.07f,  0.85f, 0.05f, 0.05f);
         }
+
+        // ── Chata (remolque) ──────────────────────────────────────────────
+        float cosC = (float)Math.cos(chataAng);
+        float sinC = (float)Math.sin(chataAng);
+
+        // Plataforma principal: cama plana gris oscuro
+        cajaGirada(chataX, 0.42f, chataZ,  1.5f, 0.14f, 2.8f,  0.30f, 0.30f, 0.32f,  chataAng);
+
+        // Bordes laterales de la plataforma (izquierdo y derecho)
+        for (float lx : new float[]{-0.78f, 0.78f}) {
+            float wx = chataX + cosC * lx;
+            float wz = chataZ - sinC * lx;
+            cajaGirada(wx, 0.58f, wz,  0.10f, 0.22f, 2.8f,  0.20f, 0.20f, 0.22f,  chataAng);
+        }
+
+        // Borde trasero de la plataforma
+        float btX = chataX + cosC * 0f + sinC * (-1.45f);
+        float btZ = chataZ - sinC * 0f + cosC * (-1.45f);
+        cajaGirada(btX, 0.58f, btZ,  1.5f, 0.22f, 0.10f,  0.20f, 0.20f, 0.22f,  chataAng);
+
+        // Ruedas traseras (eje trasero, desplazado 1.0u hacia atrás)
+        for (float lx : new float[]{-0.88f, 0.88f}) {
+            float rx = chataX + cosC * lx + sinC * (-1.0f);
+            float rz = chataZ - sinC * lx + cosC * (-1.0f);
+            cajaGirada(rx, 0.30f, rz,  0.24f, 0.55f, 0.55f,  0.055f, 0.065f, 0.08f,  chataAng);
+        }
+
+        // Barra de enganche: apunta HACIA el auto (lado delantero de la chata)
+        float brX = chataX + cosC * 0f + sinC * 1.45f;
+        float brZ = chataZ - sinC * 0f + cosC * 1.45f;
+        cajaGirada(brX, 0.48f, brZ,  0.14f, 0.14f, 0.60f,  0.45f, 0.42f, 0.38f,  chataAng);
+
+        // Gancho amarillo en la punta de la barra (toca la trasera del auto)
+        float ghX = chataX + cosC * 0f + sinC * 1.75f;
+        float ghZ = chataZ - sinC * 0f + cosC * 1.75f;
+        cajaGirada(ghX, 0.50f, ghZ,  0.22f, 0.22f, 0.18f,  0.60f, 0.55f, 0.10f,  chataAng);
+
     }
 
     /**
