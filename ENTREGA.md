@@ -7,7 +7,7 @@
 **Tecnologías:** Java 21 · Maven · LWJGL 3.3.3 · GLFW · OpenGL 3.3 Core Profile · GLSL 330  
 
 ---
-## Modificación: hacer una chata en el auto dependiente
+## Modificación realizada en presentación del proyecto: hacer una chata en el auto dependiente
 
 Se modifico en las clases: Conduccion.java y CiudadViva.java
 
